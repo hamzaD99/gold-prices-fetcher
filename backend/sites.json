@@ -1,6 +1,0 @@
-[
-    {
-        "site": "https://example.com",
-        "scraper": "backend.scraper.scrapers.ExampleComScraper"
-    }
-]

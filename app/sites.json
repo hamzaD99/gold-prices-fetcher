@@ -1,0 +1,17 @@
+[
+    {
+        "site": "https://goldprice.org/",
+        "scraper": "app.scraper.scrapers.GoldPriceOrgScraper",
+        "scrape": false
+    },
+    {
+        "site": "https://tradingeconomics.com/commodity/gold",
+        "scraper": "app.scraper.scrapers.TradingEconomicsComScraper",
+        "scrape": false
+    },
+    {
+        "site": "https://www.bullionvault.com/gold-price-chart.do",
+        "scraper": "app.scraper.scrapers.BullionVaultComScraper",
+        "scrape": true
+    }
+]
