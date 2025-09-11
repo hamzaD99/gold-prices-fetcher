@@ -9,21 +9,26 @@ from playwright.async_api import async_playwright
 from playwright_stealth import Stealth
 from datetime import datetime, timezone, timedelta
 from zoneinfo import ZoneInfo
+from app.utils.logger import info, error
 
 
 class BaseScraper(ABC):
     site = None
+    trace_id = None
 
-    def __init__(self, site) -> None:
+    def __init__(self, site, trace_id=None) -> None:
         if site:
             self.site = site
+        self.trace_id = trace_id
 
     @abstractmethod
-    def scrape(self) -> dict:
+    def scrape(self, *, trace_id: str | None = None) -> dict:
         pass
 
 class GoldPriceOrgScraper(BaseScraper):
-    async def scrape(self) -> dict:
+    async def scrape(self, *, trace_id: str | None = None) -> dict:
+        if trace_id:
+            self.trace_id = trace_id
         result = {
             "price": -1,
             "time": -1
@@ -31,11 +36,12 @@ class GoldPriceOrgScraper(BaseScraper):
         async with Stealth().use_async(async_playwright()) as p:
             browser = await p.chromium.launch(headless=True)
             page = await browser.new_page()
+            info("scrape_site_start", trace_id=self.trace_id, site=self.site, scraper="GoldPriceOrgScraper")
             await page.goto(self.site)
-            price_element = await fetch_element_inner_html(name="price_element", page=page, xpath="/html/body/main/div[2]/div/div/div[2]/div/article/div/div[3]/div[2]/div[1]/div/div/div/table/tbody/tr[2]/td[2]")
+            price_element = await fetch_element_inner_html(name="price_element", page=page, xpath="/html/body/main/div[2]/div/div/div[2]/div/article/div/div[3]/div[2]/div[1]/div/div/div/table/tbody/tr[2]/td[2]", trace_id=self.trace_id, page_url=self.site)
             result["price"] = Decimal(price_element) if price_element else -1
             
-            time_str = await fetch_element_inner_html(name="time_element", page=page, xpath="/html/body/main/div[2]/div/div/div[2]/div/article/div/div[3]/div[2]/div[1]/div/div/div/table/tfoot/tr/td/div")
+            time_str = await fetch_element_inner_html(name="time_element", page=page, xpath="/html/body/main/div[2]/div/div/div[2]/div/article/div/div[3]/div[2]/div[1]/div/div/div/table/tfoot/tr/td/div", trace_id=self.trace_id, page_url=self.site)
             if time_str:
                 cleaned = time_str.replace("th", "").replace(" NY time", "")
                 dt_local = datetime.strptime(cleaned, "%b %d %Y, %I:%M:%S %p")
@@ -45,11 +51,14 @@ class GoldPriceOrgScraper(BaseScraper):
             else:
                 result["time"] = time.time()
             await browser.close()
+        info("scrape_site_end", trace_id=self.trace_id, site=self.site, scraper="GoldPriceOrgScraper", success=(result["price"] != -1))
         return result
 
 
 class TradingEconomicsComScraper(BaseScraper):
-    async def scrape(self) -> dict:
+    async def scrape(self, *, trace_id: str | None = None) -> dict:
+        if trace_id:
+            self.trace_id = trace_id
         result = {
             "price": -1,
             "time": -1
@@ -57,12 +66,14 @@ class TradingEconomicsComScraper(BaseScraper):
         async with Stealth().use_async(async_playwright()) as p:
             browser = await p.chromium.launch(headless=True)
             page = await browser.new_page()
+            info("scrape_site_start", trace_id=self.trace_id, site=self.site, scraper="TradingEconomicsComScraper")
             await page.goto(self.site)
-            table_element = await fetch_element_inner_html(name="table_element", page=page, xpath="/html/body/form/div[5]/div/div[1]/div[4]/div/div/table")
+            table_element = await fetch_element_inner_html(name="table_element", page=page, xpath="/html/body/form/div[5]/div/div[1]/div[4]/div/div/table", trace_id=self.trace_id, page_url=self.site)
             price_str = self.fetch_gold_price_from_table(table_element) if table_element else None
             result["price"] = convert_oz_price_gm(Decimal(price_str.replace(',', ''))) if price_str else -1
             result["time"] = time.time()
             await browser.close()
+        info("scrape_site_end", trace_id=self.trace_id, site=self.site, scraper="TradingEconomicsComScraper", success=(result["price"] != -1))
         return result
     
     def fetch_gold_price_from_table(self, table_html):
@@ -73,7 +84,9 @@ class TradingEconomicsComScraper(BaseScraper):
             return price_cell.get_text(strip=True)
 
 class BullionVaultComScraper(BaseScraper):
-    async def scrape(self) -> dict:
+    async def scrape(self, *, trace_id: str | None = None) -> dict:
+        if trace_id:
+            self.trace_id = trace_id
         result = {
             "price": -1,
             "time": -1
@@ -81,10 +94,11 @@ class BullionVaultComScraper(BaseScraper):
         async with Stealth().use_async(async_playwright()) as p:
             browser = await p.chromium.launch(headless=True)
             page = await browser.new_page()
+            info("scrape_site_start", trace_id=self.trace_id, site=self.site, scraper="BullionVaultComScraper")
             await page.goto(self.site)
             price_str = None
             for _ in range(10):
-                table_element = await fetch_element_inner_html(name="table_element", page=page, xpath="/html/body/main/div[2]/div[3]/div[1]/div/div/div/table")
+                table_element = await fetch_element_inner_html(name="table_element", page=page, xpath="/html/body/main/div[2]/div[3]/div[1]/div/div/div/table", trace_id=self.trace_id, page_url=self.site)
                 price_str, time_str = self.fetch_price_and_time_from_table(table_element) if table_element else None
                 if price_str:
                     break
@@ -92,6 +106,7 @@ class BullionVaultComScraper(BaseScraper):
             result["price"] = Decimal(price_str.replace("$", "").replace(",", "")) if price_str else -1
             result["time"] = self.convert_to_timestamp(time_str) if time_str else time.time()
             await browser.close()
+        info("scrape_site_end", trace_id=self.trace_id, site=self.site, scraper="BullionVaultComScraper", success=(result["price"] != -1))
         return result
     
    
