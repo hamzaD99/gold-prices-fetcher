@@ -76,7 +76,7 @@ cp .env.template .env
 
 ```bash
 # If you have modern Docker Compose plugin
-docker compose up --build
+docker compose up --build -d
 
 # OR (older installations)
 # docker-compose up --build
