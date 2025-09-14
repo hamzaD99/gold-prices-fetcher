@@ -56,9 +56,9 @@ def scrape_gold_price():
 from celery.schedules import crontab
 
 celery_app.conf.beat_schedule = {
-    "scrape-every-10-minutes": {
+    "scrape-every-1-hour": {
         "task": "app.tasks.scrape_gold_price",
-        "schedule": crontab(minute="*/1")
+        "schedule": crontab(minute=0)
     },
 }
 celery_app.conf.timezone = "UTC"
