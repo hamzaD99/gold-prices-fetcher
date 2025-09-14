@@ -5,11 +5,14 @@ from telegram import Bot
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
-bot = Bot(token=BOT_TOKEN)
+bot = None
+if BOT_TOKEN:
+    bot = Bot(token=BOT_TOKEN)
 
 def send_telegram_message(message: str):
     async def _send():
-        await bot.send_message(chat_id=CHAT_ID, text=message, parse_mode="HTML")
+        if bot and CHAT_ID:
+            await bot.send_message(chat_id=CHAT_ID, text=message, parse_mode="HTML")
 
     try:
         loop = asyncio.get_event_loop()
