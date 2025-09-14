@@ -159,7 +159,7 @@ These are deliberate opportunities to take this from POC → production-grade cr
 
 ---
 
-## How this aligns with the Firecrawl role
+## How this aligns with the Firecrawl
 
 This repo demonstrates the exact fundamentals you’re hiring for:
 
