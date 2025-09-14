@@ -10,7 +10,8 @@ from playwright_stealth import Stealth
 from datetime import datetime, timezone, timedelta
 from zoneinfo import ZoneInfo
 from app.utils.logger import info, error
-
+from app.db.db import SessionLocal
+from app.db.models import GoldPrice
 
 class BaseScraper(ABC):
     site = None
@@ -24,6 +25,23 @@ class BaseScraper(ABC):
     @abstractmethod
     def scrape(self, *, trace_id: str | None = None) -> dict:
         pass
+
+    def save_to_db(self, data):
+        print(f"Hamza {data} {type(data)}")
+        price = data.get("price")
+        time = data.get("time")
+        session = SessionLocal()
+        try:
+            dt = datetime.fromtimestamp(time, tz=timezone.utc)
+            entry = GoldPrice(source=self.site, price=price, fetched_at=dt)
+            session.add(entry)
+            session.commit()
+        except Exception as e:
+            session.rollback()
+            error(f"Error saving to DB {e}")
+            raise
+        finally:
+            session.close()
 
 class GoldPriceOrgScraper(BaseScraper):
     async def scrape(self, *, trace_id: str | None = None) -> dict:
@@ -52,6 +70,7 @@ class GoldPriceOrgScraper(BaseScraper):
                 result["time"] = time.time()
             await browser.close()
         info("scrape_site_end", trace_id=self.trace_id, site=self.site, scraper="GoldPriceOrgScraper", success=(result["price"] != -1))
+        self.save_to_db(result)
         return result
 
 
@@ -74,6 +93,7 @@ class TradingEconomicsComScraper(BaseScraper):
             result["time"] = time.time()
             await browser.close()
         info("scrape_site_end", trace_id=self.trace_id, site=self.site, scraper="TradingEconomicsComScraper", success=(result["price"] != -1))
+        self.save_to_db(result)
         return result
     
     def fetch_gold_price_from_table(self, table_html):
@@ -107,6 +127,7 @@ class BullionVaultComScraper(BaseScraper):
             result["time"] = self.convert_to_timestamp(time_str) if time_str else time.time()
             await browser.close()
         info("scrape_site_end", trace_id=self.trace_id, site=self.site, scraper="BullionVaultComScraper", success=(result["price"] != -1))
+        self.save_to_db(result)
         return result
     
    

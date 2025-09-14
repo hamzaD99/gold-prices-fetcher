@@ -1,0 +1,19 @@
+apiVersion: 1
+
+datasources:
+  - name: Postgres
+    type: postgres
+    access: proxy
+    isDefault: false
+    user: gold
+    secureJsonData:
+      password: gold
+    jsonData:
+      database: gold
+      sslmode: disable
+      maxOpenConns: 100
+      maxIdleConns: 100
+      connMaxLifetime: 14400
+      postgresVersion: 1600
+      timescaledb: false
+    url: postgres:5432

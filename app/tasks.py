@@ -44,10 +44,14 @@ def scrape_gold_price():
         msg = (
             "📊 <b>Gold Price Update</b>\n\n"
             f"💰 <b>Average Price</b>: ${avg_price:.2f} / gram\n"
-            f"📡 <b>Sources Scraped</b>: {', '.join(valid_sites)}"
+            f"📡 <b>Sources Scraped</b>:\n" +
+            "\n".join([f"• {site}" for site in valid_sites])
         )
     if len(invalid_sites):
-        msg += f"\n❌ <b>Failed Sources</b>: {', '.join(invalid_sites)}"
+        msg += (
+            "\n\n❌ <b>Failed Sources</b>:\n" +
+            "\n".join([f"• {site}" for site in invalid_sites])
+        )
     send_telegram_message(msg)
 from celery.schedules import crontab
 

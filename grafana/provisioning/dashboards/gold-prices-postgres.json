@@ -1,0 +1,138 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "id": 10,
+      "type": "stat",
+      "title": "Avg Price Today",
+      "datasource": "Postgres",
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 0 },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "values": false },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT COALESCE(AVG(price),0) AS avg_today FROM public.gold_prices WHERE fetched_at::date = CURRENT_DATE;",
+          "datasource": "Postgres"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "none", "decimals": 2 }, "overrides": [] }
+    },
+    {
+      "id": 11,
+      "type": "stat",
+      "title": "Avg Price This Week",
+      "datasource": "Postgres",
+      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 0 },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "values": false },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT COALESCE(AVG(price),0) AS avg_week FROM public.gold_prices WHERE fetched_at >= date_trunc('week', now());",
+          "datasource": "Postgres"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "none", "decimals": 2 }, "overrides": [] }
+    },
+    {
+      "id": 12,
+      "type": "stat",
+      "title": "Avg Price This Month",
+      "datasource": "Postgres",
+      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 0 },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "values": false },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT COALESCE(AVG(price),0) AS avg_month FROM public.gold_prices WHERE fetched_at >= date_trunc('month', now());",
+          "datasource": "Postgres"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "none", "decimals": 2 }, "overrides": [] }
+    },
+    {
+      "id": 20,
+      "type": "table",
+      "title": "Latest Price per Source",
+      "datasource": "Postgres",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 6 },
+      "options": { "showHeader": true },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT DISTINCT ON (source) source, price, fetched_at FROM public.gold_prices ORDER BY source, fetched_at DESC;",
+          "datasource": "Postgres"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "none", "custom": {"align": "auto"} }, "overrides": [] }
+    },
+    {
+      "id": 30,
+      "type": "timeseries",
+      "title": "Price Over Time",
+      "datasource": "Postgres",
+      "gridPos": { "h": 12, "w": 24, "x": 0, "y": 16 },
+      "fieldConfig": { "defaults": { "unit": "none", "decimals": 2 }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "single" } },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT $__time(fetched_at), price, source AS metric FROM public.gold_prices WHERE $__timeFilter(fetched_at) ORDER BY 1;",
+          "datasource": "Postgres"
+        }
+      ]
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["postgres", "gold", "prices"],
+  "templating": { "list": [] },
+  "time": { "from": "now/y", "to": "now" },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Gold Prices (Postgres)",
+  "uid": "gold-prices-pg"
+}

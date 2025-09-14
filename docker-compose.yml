@@ -17,6 +17,7 @@ services:
       - .env
     depends_on:
       - redis
+      - postgres
 
   celery_beat:
     build: ./app
@@ -28,6 +29,7 @@ services:
       - .env
     depends_on:
       - redis
+      - postgres
 
   loki:
     image: grafana/loki:2.9.8
@@ -63,5 +65,19 @@ services:
     depends_on:
       - loki
 
+  postgres:
+    image: postgres:16
+    container_name: postgres
+    environment:
+      - POSTGRES_DB=gold
+      - POSTGRES_USER=gold
+      - POSTGRES_PASSWORD=gold
+    ports:
+      - "5439:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./app/db/init:/docker-entrypoint-initdb.d:ro
+
 volumes:
   grafana-storage:
+  pgdata:
